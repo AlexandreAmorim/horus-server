@@ -1,0 +1,402 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String       @id @default(uuid())
+  user_id               String?      @db.Uuid
+  first_name            String
+  last_name             String?
+  document              String       @unique
+  document_secondary    String?      @unique
+  rg                    String?      @unique
+  email                 String       @unique
+  password              String
+  phone                 String?
+  gender                String?
+  birthday              DateTime?    @db.Date
+  avatar                String?
+  is_intelligence       Boolean?     @default(false)
+  status                Boolean?     @default(true)
+  created_at            DateTime     @default(now())
+  updated_at            DateTime?    @default(now())
+  Token                 Token[]
+  RoleUser              RoleUser[]
+  Management            Management[]
+  Allocation            Allocation[]
+  Sector                Sector[]
+  authOrders            Services[]   @relation("auth")
+  Services              Services[]
+  presenceStartedOrders Services[]   @relation("presence_started")
+  presenceEnded         Services[]   @relation("presence_ended")
+  missingOrders         Services[]   @relation("missing")
+  People                People[]
+  Vehicle               Vehicle[]
+  Results               Results[]
+  Systems               Systems[]
+  operatedOrders        Orders[]     @relation("operator")
+  Orders                Orders[]
+
+  @@map("users")
+}
+
+model Token {
+  id         Int       @id @default(autoincrement())
+  token      String    @unique
+  type       String
+  is_revoked Boolean?  @default(false)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
+
+  @@map("tokens")
+}
+
+model Permission {
+  id             Int              @id @default(autoincrement())
+  slug           String           @unique
+  name           String           @unique
+  description    String?
+  created_at     DateTime?        @default(now())
+  updated_at     DateTime?        @default(now())
+  PermissionRole PermissionRole[]
+
+  @@map("permissions")
+}
+
+model Role {
+  id             Int              @id @default(autoincrement())
+  slug           String           @unique
+  name           String           @unique
+  description    String?
+  created_at     DateTime?        @default(now())
+  updated_at     DateTime?        @default(now())
+  PermissionRole PermissionRole[]
+  RoleUser       RoleUser[]
+
+  @@map("roles")
+}
+
+model PermissionRole {
+  id         Int       @id @default(autoincrement())
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  permissions   Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  permission_id Int
+
+  roles   Role @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  role_id Int
+
+  @@map("permission_role")
+}
+
+model RoleUser {
+  id         Int       @id @default(autoincrement())
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  role    Role @relation(fields: [role_id], references: [id])
+  role_id Int
+
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
+
+  @@map("role_user")
+}
+
+model Address {
+  id           Int          @id @default(autoincrement())
+  name         String?
+  zip          String?
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  country      String?
+  reference    String?
+  latitude     Decimal?     @db.Decimal(9, 6)
+  longitude    Decimal?     @db.Decimal(9, 6)
+  created_at   DateTime?    @default(now())
+  updated_at   DateTime?    @default(now())
+  Management   Management[]
+  Orders       Orders[]
+
+  @@map("addresses")
+}
+
+model Management {
+  id         Int       @id @default(autoincrement())
+  level      String?
+  name       String    @unique
+  initials   String    @unique
+  phone      String?
+  is_core    Boolean?  @default(false)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
+
+  address    Address @relation(fields: [address_id], references: [id])
+  address_id Int
+
+  ascendant_id         Int?        @unique
+  AscendantSuccessor   Management? @relation("AscendantId", fields: [ascendant_id], references: [id])
+  AscendantPredecessor Management? @relation("AscendantId")
+
+  core_id         Int?        @unique
+  CoreSuccessor   Management? @relation("CoreId", fields: [core_id], references: [id])
+  CorePredecessor Management? @relation("CoreId")
+
+  Allocation Allocation[]
+  Sector     Sector[]
+  Services   Services[]
+  Orders     Orders[]
+
+  @@map("managements")
+}
+
+model Allocation {
+  id         Int       @id @default(autoincrement())
+  started_at DateTime
+  ended_at   DateTime?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  management    Management @relation(fields: [management_id], references: [id])
+  management_id Int
+
+  user    User?   @relation(fields: [user_id], references: [id])
+  user_id String?
+
+  @@map("allocations")
+}
+
+model Setting {
+  id                   Int       @id @default(autoincrement())
+  version              String?
+  profile_update_limit DateTime? @default(now())
+  managementsIds       String?
+  cortex_status        Boolean?  @default(true)
+  cortex_token         String?
+  cortex_status_person Boolean?  @default(true)
+  cortex_token_person  String?
+  cetic_status         Boolean?  @default(true)
+  cetic_token          String?
+  sinalid_status       Boolean?  @default(true)
+  sinalid_token        String?
+  sinalid_cookie       String?
+  created_at           DateTime? @default(now())
+  updated_at           DateTime? @default(now())
+
+  @@map("settings")
+}
+
+model Sector {
+  id          Int       @id @default(autoincrement())
+  initials    String?
+  name        String?
+  description String?
+  status      Boolean   @default(true)
+  created_at  DateTime? @default(now())
+  updated_at  DateTime? @default(now())
+
+  management    Management @relation(fields: [management_id], references: [id])
+  management_id Int
+
+  user     User?      @relation(fields: [user_id], references: [id])
+  user_id  String
+  Services Services[]
+  Orders   Orders[]
+
+  @@map("sectors")
+}
+
+model Services {
+  id                  String    @id @default(uuid())
+  started_at          DateTime?
+  ended_at            DateTime?
+  presence_started_at DateTime?
+  presence_ended_at   DateTime?
+  description         String
+  status              String
+  created_at          DateTime? @default(now())
+  updated_at          DateTime? @default(now())
+
+  sector    Sector? @relation(fields: [sector_id], references: [id])
+  sector_id Int
+
+  management    Management? @relation(fields: [management_id], references: [id])
+  management_id Int
+
+  user    User?  @relation(fields: [user_id], references: [id])
+  user_id String
+
+  auth    User?  @relation("auth", fields: [auth_id], references: [id])
+  auth_id String
+
+  presence_started    User?  @relation("presence_started", fields: [presence_started_id], references: [id])
+  presence_started_id String
+
+  presence_ended    User?  @relation("presence_ended", fields: [presence_ended_id], references: [id])
+  presence_ended_id String
+
+  missing    User?    @relation("missing", fields: [missing_id], references: [id])
+  missing_id String
+  Orders     Orders[]
+
+  @@map("services")
+}
+
+model People {
+  id                 String    @id @default(uuid())
+  name               String?
+  nickname           String?
+  birthday           DateTime? @db.Date
+  year_birth         Int?
+  gender             String?
+  mather             String?
+  father             String?
+  phone              String?
+  cell_phone         String?
+  document           String    @unique
+  document_secondary String?   @unique
+  place_birth        String?
+  description        String?
+  created_at         DateTime? @default(now())
+  updated_at         DateTime? @default(now())
+
+  user    User?    @relation(fields: [user_id], references: [id])
+  user_id String
+  Orders  Orders[]
+
+  @@index([document, document_secondary])
+  @@map("people")
+}
+
+model Vehicle {
+  id            String    @id @default(uuid())
+  plate         String    @unique
+  chassi        String    @unique
+  color         String?
+  brand         String?
+  model         String?
+  engine_number String?
+  description   String?
+  created_at    DateTime? @default(now())
+  updated_at    DateTime? @default(now())
+
+  user    User?    @relation(fields: [user_id], references: [id])
+  user_id String
+  Orders  Orders[]
+
+  @@index([plate, chassi])
+  @@map("vehicles")
+}
+
+model SituationTypes {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  @@map("situation_types")
+}
+
+model Results {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  conduction Boolean   @default(false)
+  type       String
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user    User?    @relation(fields: [user_id], references: [id])
+  user_id String
+  Orders  Orders[]
+
+  @@map("results")
+}
+
+model Systems {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  url        String?
+  status     Boolean   @default(true)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user    User?  @relation(fields: [user_id], references: [id])
+  user_id String
+
+  @@index([name])
+  @@map("systems")
+}
+
+model Orders {
+  id                 String    @id @default(uuid())
+  latitude           Int?
+  longitude          Int?
+  note               String?
+  description        String?
+  document           String?
+  document_secondary String?
+  name               String?
+  birthday           DateTime?
+  mather             String?
+  father             String?
+  plate              String?
+  chassi             String?
+
+  type   String?
+  status String?
+
+  color         String?
+  brand         String?
+  model         String?
+  engine_number String?
+  place_birth   String?
+  gender        String?
+
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user    User?  @relation(fields: [user_id], references: [id])
+  user_id String
+
+  operator    User?   @relation("operator", fields: [operator_id], references: [id])
+  operator_id String?
+
+  vehicle    Vehicle? @relation(fields: [vehicle_id], references: [id])
+  vehicle_id String?
+
+  person    People? @relation(fields: [person_id], references: [id])
+  person_id String?
+
+  address    Address? @relation(fields: [address_id], references: [id])
+  address_id Int?
+
+  management    Management? @relation(fields: [management_id], references: [id])
+  management_id Int?
+
+  results   Results? @relation(fields: [result_id], references: [id])
+  result_id Int?
+
+  sector    Sector? @relation(fields: [sector_id], references: [id])
+  sector_id Int?
+
+  service    Services? @relation(fields: [service_id], references: [id])
+  service_id String?
+
+  @@map("orders")
+}

@@ -1,0 +1,34 @@
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MDY4YTJiOC03ZjViLTQ2YTktYTc2Zi04N2RiYjhhNWExMGMiLCJpYXQiOjE3MTI5NDgwNDQsImV4cCI6MTcxMjk0ODEwNH0.K5slJQyo5_AtNiZ-Vx5WkxiGZGYuEnwDPoXVLFqeZ9s
+@authRefresh = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MDY4YTJiOC03ZjViLTQ2YTktYTc2Zi04N2RiYjhhNWExMGMiLCJpYXQiOjE3MTI5NDc5MTQsImV4cCI6MTcxMjk0ODA5NH0.3tbdzUDYDve3_qDEWNarmv--nNfr5Obr9yeKhNn83uQ
+
+GET http://192.198.50.12:3333
+
+###
+POST http://192.198.50.12:3333/auth
+content-type: application/json
+
+{
+    "document": "04160807747",
+    "password": "123456"
+}
+###
+
+POST http://192.198.50.12:3333/register
+content-type: application/json
+Authorization: Bearer {{authToken}}
+
+{   "first_name": "Lara garnier",
+    "document": "asdasdas",
+    "email": "la6.rj30@gmail.com",
+    "password": "123456"
+}
+
+###
+GET http://192.198.50.12:3333/me
+content-type: application/json
+Authorization: Bearer {{authToken}}
+
+###
+GET http://192.198.50.12:3333/refresh
+content-type: application/json
+Authorization: Bearer {{authRefresh}}
